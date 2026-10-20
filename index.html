@@ -85,12 +85,12 @@
 /* ============ Dados (sem banco: localStorage) ============ */
 const KEY = 'tubeforum_v1';
 const YOUTUBE_API_KEY = window.YOUTUBE_API_KEY || '';
-const FALLBACK_VIDEOS = [{
-  id: 'M7lc1UVf-VE',
-  title: 'Vídeo de demonstração do YouTube',
-  channel: 'YouTube Developers',
-  thumbnail: 'https://img.youtube.com/vi/M7lc1UVf-VE/mqdefault.jpg'
-}];
+const thumb = id => `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+const FALLBACK_VIDEOS = [
+  { id: 'M7lc1UVf-VE', title: 'Vídeo de demonstração do YouTube', channel: 'YouTube Developers' },
+  { id: 'dQw4w9WgXcQ', title: 'Vídeo recomendado', channel: 'YouTube' },
+  { id: 'kJQP7kiw5Fk', title: 'Vídeo recomendado', channel: 'YouTube' }
+].map(video => ({ ...video, thumbnail: thumb(video.id) }));
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || { videos: [], comments: {} }; }
   catch { return { videos: [], comments: {} }; }
@@ -117,8 +117,6 @@ function parseVideoId(input) {
   } catch {}
   return null;
 }
-const thumb = id => `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-
 async function youtubeRequest(endpoint, params) {
   if (!YOUTUBE_API_KEY) throw new Error('A chave da API do YouTube ainda não foi configurada.');
   const query = new URLSearchParams({ ...params, key: YOUTUBE_API_KEY });
@@ -220,33 +218,11 @@ let player = null;
 function renderHome() {
   player = null;
   $('#app').innerHTML = `
-    <form class="add" id="addForm">
-      <input id="url" placeholder="Cole o link de um vídeo do YouTube...">
-      <button class="primary">Adicionar vídeo</button>
-    </form>
     <form class="add" id="searchForm">
       <input id="query" placeholder="Pesquisar vídeos no YouTube..." required>
       <button>Pesquisar</button>
     </form>
-    <section class="featured">
-      <h2 class="section-title">Vídeo em destaque</h2>
-      <div class="featured-player">
-        <iframe src="https://www.youtube.com/embed/M7lc1UVf-VE"
-          title="Vídeo em destaque" allowfullscreen></iframe>
-      </div>
-    </section>
-    <div id="list"><div class="notice">Carregando os vídeos mais vistos...</div></div>`;
-  $('#addForm').onsubmit = async e => {
-    e.preventDefault();
-    const id = parseVideoId($('#url').value);
-    if (!id) return alert('Link inválido. Cole uma URL do YouTube.');
-    if (db.videos.some(v => v.id === id)) { location.hash = '#/v/' + id; return; }
-    const btn = $('#addForm button'); btn.disabled = true; btn.textContent = 'Buscando...';
-    const info = await fetchTitle(id);
-    db.videos.unshift({ id, title: info.title, channel: info.author, addedAt: Date.now() });
-    save();
-    location.hash = '#/v/' + id;
-  };
+    <div id="list"><h2 class="section-title">Vídeos recomendados</h2>${videoCards(FALLBACK_VIDEOS)}</div>`;
   $('#searchForm').onsubmit = async e => {
     e.preventDefault();
     const list = $('#list'), query = $('#query').value.trim();
@@ -263,11 +239,7 @@ function renderHome() {
     const availableVideos = videos.length ? videos : FALLBACK_VIDEOS;
     list.innerHTML = '<h2 class="section-title">Em alta no Brasil</h2>' + videoCards(availableVideos);
     if (db.videos.length) list.innerHTML += '<h2 class="section-title">Seus vídeos</h2>' + videoCards(db.videos);
-  }).catch(error => {
-    list.innerHTML = '<h2 class="section-title">Vídeo em destaque</h2>' +
-      videoCards(FALLBACK_VIDEOS) +
-      `<div class="notice">${esc(error.message)} Os vídeos em alta aparecerão quando a API estiver configurada.</div>`;
-  });
+  }).catch(() => {});
 }
 
 async function renderWatch(id) {
