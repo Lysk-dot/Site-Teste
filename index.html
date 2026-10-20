@@ -39,6 +39,7 @@
   .section-title { margin: 28px 0 12px; font-size: 20px; }
   .notice { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
     color: var(--muted); padding: 16px; }
+  .category { margin-bottom: 32px; }
   .featured { margin: 28px 0; }
   .featured-player { position: relative; width: 100%; max-width: 760px; aspect-ratio: 16/9;
     background: #000; border-radius: 12px; overflow: hidden; }
@@ -169,6 +170,26 @@ async function searchVideos(query) {
   return (data.items || []).map(apiVideo);
 }
 
+const CATEGORIES = [
+  { id: 'viral', title: 'Vídeos virais', query: 'vídeos virais Brasil' },
+  { id: 'sertanejo', title: 'Música sertaneja', query: 'música sertaneja' },
+  { id: 'funk', title: 'Funk', query: 'funk brasileiro' },
+  { id: 'pop', title: 'Pop', query: 'música pop lançamentos' },
+  { id: 'rock', title: 'Rock', query: 'rock músicas' },
+  { id: 'rap', title: 'Rap e hip hop', query: 'rap brasileiro' },
+  { id: 'educativo', title: 'Educativo', query: 'vídeos educativos' },
+  { id: 'pets', title: 'Pets', query: 'vídeos de pets' },
+  { id: 'jogos', title: 'Jogos online', query: 'jogos online gameplay' },
+  { id: 'carros', title: 'Carros', query: 'carros novidades e testes' }
+];
+
+function fallbackCategoryVideos(category) {
+  return FALLBACK_VIDEOS.map(video => ({
+    ...video,
+    title: category.title + ' - ' + video.title
+  }));
+}
+
 function videoCards(videos) {
   return '<div class="grid">' + videos.map(v => `
     <a class="card" href="#/v/${v.id}">
@@ -185,7 +206,9 @@ async function fetchTitle(id) {
     const r = await fetch('https://noembed.com/embed?url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id));
     const j = await r.json();
     if (j.title) return { title: j.title, author: j.author_name || '' };
-  } catch {}
+  } catch {
+    list.innerHTML = '<h2 class="section-title">Vídeos recomendados</h2>' + videoCards(FALLBACK_VIDEOS);
+  }
   return { title: 'Vídeo ' + id, author: '' };
 }
 
@@ -222,7 +245,11 @@ function renderHome() {
       <input id="query" placeholder="Pesquisar vídeos no YouTube..." required>
       <button>Pesquisar</button>
     </form>
-    <div id="list"><h2 class="section-title">Vídeos recomendados</h2>${videoCards(FALLBACK_VIDEOS)}</div>`;
+    <div id="list">${CATEGORIES.map(category => `
+      <section class="category" id="category-${category.id}">
+        <h2 class="section-title">${category.title}</h2>
+        ${videoCards(fallbackCategoryVideos(category))}
+      </section>`).join('')}</div>`;
   $('#searchForm').onsubmit = async e => {
     e.preventDefault();
     const list = $('#list'), query = $('#query').value.trim();
@@ -230,16 +257,15 @@ function renderHome() {
     list.innerHTML = '<div class="notice">Pesquisando...</div>';
     try {
       list.innerHTML = '<h2 class="section-title">Resultados da pesquisa</h2>' + videoCards(await searchVideos(query));
-    } catch (error) {
-      list.innerHTML = `<div class="notice">${esc(error.message)}</div>`;
-    }
+    } catch {}
   };
-  const list = $('#list');
-  fetchPopularVideos().then(videos => {
-    const availableVideos = videos.length ? videos : FALLBACK_VIDEOS;
-    list.innerHTML = '<h2 class="section-title">Em alta no Brasil</h2>' + videoCards(availableVideos);
-    if (db.videos.length) list.innerHTML += '<h2 class="section-title">Seus vídeos</h2>' + videoCards(db.videos);
-  }).catch(() => {});
+  CATEGORIES.forEach(category => {
+    searchVideos(category.query).then(videos => {
+      if (!videos.length) return;
+      const section = $('#category-' + category.id);
+      if (section) section.innerHTML = `<h2 class="section-title">${category.title}</h2>${videoCards(videos)}`;
+    }).catch(() => {});
+  });
 }
 
 async function renderWatch(id) {
