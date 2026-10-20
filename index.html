@@ -87,11 +87,18 @@
 const KEY = 'tubeforum_v1';
 const YOUTUBE_API_KEY = window.YOUTUBE_API_KEY || '';
 const thumb = id => `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-const FALLBACK_VIDEOS = [
-  { id: 'M7lc1UVf-VE', title: 'Vídeo de demonstração do YouTube', channel: 'YouTube Developers' },
-  { id: 'dQw4w9WgXcQ', title: 'Vídeo recomendado', channel: 'YouTube' },
-  { id: 'kJQP7kiw5Fk', title: 'Vídeo recomendado', channel: 'YouTube' }
-].map(video => ({ ...video, thumbnail: thumb(video.id) }));
+const FALLBACK_VIDEOS = {
+  viral: ['dQw4w9WgXcQ', 'kJQP7kiw5Fk', 'JGwWNGJdvx8'],
+  sertanejo: ['6XKX6q0g5Yc', '5yXQJBUfVbI', 'hTWKbfoikeg'],
+  funk: ['OPf0YbXqDm0', 'CevxZvSJLk8', 'uelHwf8o7_U'],
+  pop: ['YQHsXMglC9A', '09R8_2nJtjg', 'RgKAFK5djSk'],
+  rock: ['fJ9rUzIMcZQ', 'hTWKbfoikeg', '3JWTaaS7LdU'],
+  rap: ['5qm8PH4xAss', 'L_jWHffIx5E', 'kXYiU_JCYtU'],
+  educativo: ['arj7oStGLkU', 'M7lc1UVf-VE', 'ZbZSe6N_BXs'],
+  pets: ['tntOCGkgt98', '0Bmhjf0rKe8', 'a1Y73sPHKxw'],
+  jogos: ['2g811Eo7K8U', 'W6NZfCO5SIk', 'Xg3U7oFJz8I'],
+  carros: ['7wt-3Wq8k6s', '5zqPjT9s3mQ', 'cK3C8Yw7V2A']
+};
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || { videos: [], comments: {} }; }
   catch { return { videos: [], comments: {} }; }
@@ -184,9 +191,11 @@ const CATEGORIES = [
 ];
 
 function fallbackCategoryVideos(category) {
-  return FALLBACK_VIDEOS.map(video => ({
-    ...video,
-    title: category.title + ' - ' + video.title
+  return (FALLBACK_VIDEOS[category.id] || []).map((id, index) => ({
+    id,
+    title: category.title + ' - recomendação ' + (index + 1),
+    channel: 'YouTube',
+    thumbnail: thumb(id)
   }));
 }
 
@@ -206,9 +215,7 @@ async function fetchTitle(id) {
     const r = await fetch('https://noembed.com/embed?url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id));
     const j = await r.json();
     if (j.title) return { title: j.title, author: j.author_name || '' };
-  } catch {
-    list.innerHTML = '<h2 class="section-title">Vídeos recomendados</h2>' + videoCards(FALLBACK_VIDEOS);
-  }
+  } catch {}
   return { title: 'Vídeo ' + id, author: '' };
 }
 
