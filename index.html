@@ -81,6 +81,12 @@
 /* ============ Dados (sem banco: localStorage) ============ */
 const KEY = 'tubeforum_v1';
 const YOUTUBE_API_KEY = window.YOUTUBE_API_KEY || '';
+const FALLBACK_VIDEOS = [{
+  id: 'M7lc1UVf-VE',
+  title: 'Vídeo de demonstração do YouTube',
+  channel: 'YouTube Developers',
+  thumbnail: 'https://img.youtube.com/vi/M7lc1UVf-VE/mqdefault.jpg'
+}];
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || { videos: [], comments: {} }; }
   catch { return { videos: [], comments: {} }; }
@@ -243,10 +249,13 @@ function renderHome() {
   };
   const list = $('#list');
   fetchPopularVideos().then(videos => {
-    list.innerHTML = '<h2 class="section-title">Em alta no Brasil</h2>' + videoCards(videos);
+    const availableVideos = videos.length ? videos : FALLBACK_VIDEOS;
+    list.innerHTML = '<h2 class="section-title">Em alta no Brasil</h2>' + videoCards(availableVideos);
     if (db.videos.length) list.innerHTML += '<h2 class="section-title">Seus vídeos</h2>' + videoCards(db.videos);
   }).catch(error => {
-    list.innerHTML = `<div class="notice">${esc(error.message)}</div>`;
+    list.innerHTML = '<h2 class="section-title">Vídeo em destaque</h2>' +
+      videoCards(FALLBACK_VIDEOS) +
+      `<div class="notice">${esc(error.message)} Os vídeos em alta aparecerão quando a API estiver configurada.</div>`;
   });
 }
 
