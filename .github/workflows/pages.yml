@@ -28,6 +28,11 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Configure YouTube API
+        run: printf "window.YOUTUBE_API_KEY = '%s';\n" "$YOUTUBE_API_KEY" > config.js
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
