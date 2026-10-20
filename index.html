@@ -39,6 +39,10 @@
   .section-title { margin: 28px 0 12px; font-size: 20px; }
   .notice { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
     color: var(--muted); padding: 16px; }
+  .featured { margin: 28px 0; }
+  .featured-player { position: relative; width: 100%; max-width: 760px; aspect-ratio: 16/9;
+    background: #000; border-radius: 12px; overflow: hidden; }
+  .featured-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   .watch { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
   @media (max-width: 900px) { .watch { grid-template-columns: 1fr; } }
   .player { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
@@ -224,6 +228,13 @@ function renderHome() {
       <input id="query" placeholder="Pesquisar vídeos no YouTube..." required>
       <button>Pesquisar</button>
     </form>
+    <section class="featured">
+      <h2 class="section-title">Vídeo em destaque</h2>
+      <div class="featured-player">
+        <iframe src="https://www.youtube.com/embed/M7lc1UVf-VE"
+          title="Vídeo em destaque" allowfullscreen></iframe>
+      </div>
+    </section>
     <div id="list"><div class="notice">Carregando os vídeos mais vistos...</div></div>`;
   $('#addForm').onsubmit = async e => {
     e.preventDefault();
